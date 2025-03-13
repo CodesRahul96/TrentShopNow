@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: linear-gradient(135deg, #F5F7FA 0%, #DDE4E9 100%);
+  color: #2D3748;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+a {
+  color: #3182CE;
+}
+
+a:hover {
+  color: #2B6CB0;
+}
