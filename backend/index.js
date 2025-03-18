@@ -47,7 +47,7 @@ app.use('/api/orders', orderRoutes);
 
 // Root route (optional, for testing)
 app.get('/', (req, res) => {
-  res.json({ message: 'Blogify Backend is running' });
+  res.json({ message: 'TrentShopNow Backend is running' });
 });
 
 // Export the app for Vercel serverless
