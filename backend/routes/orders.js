@@ -1,33 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const Order = require('../models/Order');
+const authenticate = require('../middleware/authenticate');
 
-// Middleware to verify user
-const authenticate = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Authentication required' });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
-
-// Create order (for checkout)
 router.post('/', authenticate, async (req, res) => {
-  const { items, total } = req.body;
-  const order = new Order({
-    user: req.userId,
-    items,
-    total,
-    status: 'pending'
-  });
-  await order.save();
-  res.status(201).json(order);
+  const { items, total, shippingAddress, paymentMethod } = req.body;
+  try {
+    const order = new Order({
+      user: req.userId,
+      items: items.map(item => ({
+        product: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      total,
+      shippingAddress,
+      paymentMethod
+    });
+    await order.save();
+    res.status(201).json(order);
+  } catch (error) {
+    console.error('Order creation failed:', error);
+    res.status(500).json({ message: 'Failed to create order' });
+  }
+});
+
+router.get('/', authenticate, async (req, res) => {
+  const orders = await Order.find({ user: req.userId })
+    .populate('items.product', 'name price');
+  res.json(orders);
+});
+
+// New endpoint to cancel an order
+router.put('/cancel/:id', authenticate, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.userId });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'pending') return res.status(400).json({ message: 'Only pending orders can be cancelled' });
+
+    order.status = 'cancelled';
+    await order.save();
+    res.json(order);
+  } catch (error) {
+    console.error('Failed to cancel order:', error);
+    res.status(500).json({ message: 'Failed to cancel order' });
+  }
 });
 
 module.exports = router;

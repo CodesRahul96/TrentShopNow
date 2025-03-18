@@ -3,22 +3,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Order = require('../models/Order');
-const jwt = require('jsonwebtoken');
-
-// Middleware to check if user is admin
-const isAdmin = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Authentication required' });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
+const isAdmin = require('../middleware/isAdmin');
 
 // Get all products
 router.get('/products', isAdmin, async (req, res) => {
@@ -57,16 +42,34 @@ router.put('/users/:id', isAdmin, async (req, res) => {
   res.json(user);
 });
 
-// Get all orders
+// Get all orders (for admin)
 router.get('/orders', isAdmin, async (req, res) => {
-  const orders = await Order.find().populate('user', 'email');
-  res.json(orders);
+  try {
+    const orders = await Order.find()
+      .populate('user', 'email') // Populate user email
+      .populate('items.product', 'name price'); // Populate product details
+    res.json(orders);
+  } catch (error) {
+    console.error('Failed to fetch orders:', error);
+    res.status(500).json({ message: 'Failed to fetch orders' });
+  }
 });
 
 // Update order status
 router.put('/orders/:id', isAdmin, async (req, res) => {
-  const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-  res.json(order);
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    console.error('Failed to update order status:', error);
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
 });
 
 module.exports = router;
