@@ -12,7 +12,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/login`, { email, password });
       localStorage.setItem('token', response.data.token);
       navigate('/');
     } catch (error) {
@@ -46,7 +46,7 @@ export default function Login() {
       </form>
       {error && <p className="mt-4 text-center text-red-500">{error}</p>}
       <p className="mt-4 text-center">
-        Don't have an account? <Link to="/register" className="text-primary hover:text-accent transition-colors">Register</Link>
+        Don&apos;t have an account? <Link to="/register" className="text-primary hover:text-accent transition-colors">Register</Link>
       </p>
     </div>
   );

@@ -12,7 +12,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', { email, password });
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/register`, { email, password });
       alert('Registration successful! Please log in.');
       navigate('/login');
     } catch (error) {

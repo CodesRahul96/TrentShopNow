@@ -8,7 +8,7 @@ export default function CategoryProducts() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/products`)
       .then(response => {
         const filteredProducts = response.data.filter(product => product.category === category);
         setProducts(filteredProducts);

@@ -18,10 +18,10 @@ export default function ProductDetails() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/products/${productId}`);
         setProduct(response.data);
 
-        const allProducts = await axios.get('http://localhost:5000/api/products');
+        const allProducts = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/products`);
         const related = allProducts.data
           .filter(p => p.category === response.data.category && p._id !== productId)
           .slice(0, 3);
@@ -53,7 +53,7 @@ export default function ProductDetails() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `http://localhost:5000/api/products/${productId}/reviews`,
+        `${import.meta.env.VITE_BASE_URL}/api/products/${productId}/reviews`,
         { rating, comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );

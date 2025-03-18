@@ -8,7 +8,7 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios.get(`${import.meta.env.VITE_BASE_URL}/api/products`)
       .then(response => {
         setProducts(response.data);
         const uniqueCategories = [...new Set(response.data.map(product => product.category))];
