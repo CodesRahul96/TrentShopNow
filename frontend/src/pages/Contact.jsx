@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: '',
+    name: "",
+    email: "",
+    message: "",
   });
-  const [status, setStatus] = useState(''); // Success or error message
+  const [status, setStatus] = useState(""); // Success or error message
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,14 +16,14 @@ export default function ContactUs() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus('');
+    setStatus("");
     try {
-      await axios.post('http://localhost:5000/api/contact', formData);
-      setStatus('Message sent successfully! We’ll get back to you soon.');
-      setFormData({ name: '', email: '', message: '' }); // Reset form
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/contact`, formData);
+      setStatus("Message sent successfully! We’ll get back to you soon.");
+      setFormData({ name: "", email: "", message: "" }); // Reset form
     } catch (error) {
-      setStatus('Failed to send message. Please try again later.');
-      console.error('Error sending contact form:', error);
+      setStatus("Failed to send message. Please try again later.");
+      console.error("Error sending contact form:", error);
     }
   };
 
@@ -37,9 +37,15 @@ export default function ContactUs() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Contact Form */}
           <div className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-6">Send Us a Message</h2>
+            <h2 className="text-2xl font-semibold text-yellow-accent mb-6">
+              Send Us a Message
+            </h2>
             {status && (
-              <p className={`text-center mb-4 ${status.includes('success') ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className={`text-center mb-4 ${
+                  status.includes("success") ? "text-green-400" : "text-red-400"
+                }`}
+              >
                 {status}
               </p>
             )}
@@ -100,10 +106,12 @@ export default function ContactUs() {
 
           {/* Contact Information */}
           <div className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-6">Get in Touch</h2>
+            <h2 className="text-2xl font-semibold text-yellow-accent mb-6">
+              Get in Touch
+            </h2>
             <div className="space-y-4 text-light-text">
               <p>
-                <span className="font-semibold">Email:</span>{' '}
+                <span className="font-semibold">Email:</span>{" "}
                 <a
                   href="mailto:support@trentshopnow.com"
                   className="text-yellow-accent hover:text-light-yellow transition-colors"
@@ -112,7 +120,7 @@ export default function ContactUs() {
                 </a>
               </p>
               <p>
-                <span className="font-semibold">Phone:</span>{' '}
+                <span className="font-semibold">Phone:</span>{" "}
                 <a
                   href="tel:+1234567890"
                   className="text-yellow-accent hover:text-light-yellow transition-colors"
@@ -121,7 +129,8 @@ export default function ContactUs() {
                 </a>
               </p>
               <p>
-                <span className="font-semibold">Address:</span> 123 Shopping Lane, Commerce City, TX 75001
+                <span className="font-semibold">Address:</span> 123 Shopping
+                Lane, Commerce City, TX 75001
               </p>
             </div>
             <div className="mt-6 text-center">

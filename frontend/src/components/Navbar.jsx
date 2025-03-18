@@ -9,7 +9,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [profilePicture, setProfilePicture] = useState('https://via.placeholder.com/40');
+  const [profilePicture, setProfilePicture] = useState('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAzBE_P3rPclK8gJnC-y1Mq7kNOvyL8yUHlg&s');
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -18,10 +18,10 @@ export default function Navbar() {
       try {
         const decoded = decodeToken(token);
         setUserRole(decoded.role);
-        axios.get('http://localhost:5000/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
           .then(res => {
             if (res.data.profilePicture) {
-              setProfilePicture(`http://localhost:5000${res.data.profilePicture}`);
+              setProfilePicture(`${import.meta.env.VITE_BASE_URL}/${res.data.profilePicture}`);
             }
           })
           .catch(err => console.error('Failed to fetch user details:', err));

@@ -44,7 +44,7 @@ export default function Checkout() {
     try {
       const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       await axios.post(
-        'http://localhost:5000/api/orders',
+        `${import.meta.env.VITE_BASE_URL}/api/orders`,
         {
           items: cart,
           total,

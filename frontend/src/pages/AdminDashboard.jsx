@@ -33,9 +33,9 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       try {
         const [productsRes, usersRes, ordersRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/admin/products', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:5000/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:5000/api/admin/orders', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/products`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/orders`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
         setProducts(productsRes.data);
         setUsers(usersRes.data);
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/admin/products', newProduct, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/products`, newProduct, { headers: { Authorization: `Bearer ${token}` } });
       setProducts([...products, res.data]);
       setNewProduct({ name: '', price: '', description: '', image: '', stock: '', category: '' });
     } catch (error) {
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   const handleEditProduct = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/products/${editProduct._id}`, editProduct, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/products/${editProduct._id}`, editProduct, { headers: { Authorization: `Bearer ${token}` } });
       setProducts(products.map(p => p._id === editProduct._id ? res.data : p));
       setEditProduct(null);
     } catch (error) {
@@ -71,18 +71,18 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteProduct = async (id) => {
-    await axios.delete(`http://localhost:5000/api/admin/products/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+    await axios.delete(`${import.meta.env.VITE_BASE_URL}/api/admin/products/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     setProducts(products.filter(p => p._id !== id));
   };
 
   const handleUpdateRole = async (id, role) => {
-    const res = await axios.put(`http://localhost:5000/api/admin/users/${id}`, { role }, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/users/${id}`, { role }, { headers: { Authorization: `Bearer ${token}` } });
     setUsers(users.map(u => u._id === id ? res.data : u));
   };
 
   const handleUpdateOrderStatus = async (id, status) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/orders/${id}`, { status }, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/orders/${id}`, { status }, { headers: { Authorization: `Bearer ${token}` } });
       setOrders(orders.map(o => o._id === id ? res.data : o));
     } catch (error) {
       console.error('Failed to update order status:', error);
