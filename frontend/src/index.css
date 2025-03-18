@@ -3,17 +3,27 @@
 @tailwind utilities;
 
 body {
-  background: linear-gradient(135deg, #F5F7FA 0%, #DDE4E9 100%);
-  color: #2D3748;
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: #1F2937; /* dark-bg */
+  color: #F3F4F6; /* light-text */
+  font-family: 'Inter', sans-serif; /* Modern font, add via CDN or npm */
 }
 
-a {
-  color: #3182CE;
+/* Glass effect utility */
+.glass-effect {
+  background: rgba(255, 249, 230, 0.1); /* light-yellow with transparency */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  border: 1px solid rgba(255, 249, 230, 0.2);
 }
 
-a:hover {
-  color: #2B6CB0;
+/* Hover effect for cards and buttons */
+.hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
 }

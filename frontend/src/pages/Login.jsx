@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,46 +8,57 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/login`, { email, password });
-      localStorage.setItem('token', response.data.token);
-      navigate('/');
-    } catch (error) {
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
+      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      localStorage.setItem('token', res.data.token);
+      navigate('/dashboard'); // Redirect to dashboard after login
+    } catch (err) {
+      setError(err.response?.data.message || 'Login failed');
     }
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-md text-text">
-      <h1 className="text-4xl font-bold mb-8 text-center text-primary">Login</h1>
-      <form onSubmit={handleLogin} className="space-y-6 bg-background p-6 rounded-lg shadow-lg">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          required
-        />
-        <button type="submit" className="w-full bg-primary text-white p-3 rounded hover:bg-accent transition-colors shadow-md">
-          Login
-        </button>
-      </form>
-      {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-      <p className="mt-4 text-center">
-        Don&apos;t have an account? <Link to="/register" className="text-primary hover:text-accent transition-colors">Register</Link>
-      </p>
+    <div className="min-h-screen bg-dark-bg flex items-center justify-center p-6">
+      <div className="glass-effect p-8 rounded-lg shadow-glass max-w-md w-full hover-effect">
+        <h1 className="text-3xl font-bold text-yellow-accent mb-6 text-center">Login</h1>
+        {error && <p className="text-red-400 text-center mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect font-semibold"
+          >
+            Login
+          </button>
+        </form>
+        <p className="text-light-text text-center mt-4">
+          Don’t have an account?{' '}
+          <Link to="/register" className="text-yellow-accent hover:underline transition-colors">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

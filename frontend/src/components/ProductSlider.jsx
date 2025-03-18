@@ -1,57 +1,65 @@
-import { useState, useEffect } from 'react';
-import ProductCard from './ProductCard';
+import { Link } from 'react-router-dom';
+
+// Simple StarRating component for product cards
+const StarRating = ({ rating }) => {
+  const stars = [1, 2, 3, 4, 5];
+  return (
+    <div className="flex">
+      {stars.map((star) => (
+        <span
+          key={star}
+          className={`text-sm ${star <= rating ? 'text-yellow-accent' : 'text-light-text/50'}`}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+};
 
 export default function ProductSlider({ products, category }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerPage = 3;
-
-  const filteredProducts = products.filter(product => product.category === category);
-  const totalSlides = Math.ceil(filteredProducts.length / itemsPerPage);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % totalSlides);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
-  useEffect(() => {
-    const interval = setInterval(nextSlide, 5000);
-    return () => clearInterval(interval);
-  }, [totalSlides]);
-
-  const startIndex = currentIndex * itemsPerPage;
-  const visibleProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  const filteredProducts = category === 'Top Picks'
+    ? products
+    : products.filter(product => product.category === category);
 
   return (
-    <div className="mb-12">
-      <h2 className="text-2xl font-bold mb-4 capitalize text-primary">{category}</h2>
-      <div className="relative overflow-hidden">
-        <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+    <div className="overflow-x-auto pb-4">
+      <h2 className="text-2xl font-semibold text-yellow-accent mb-4">{category}</h2>
+      {filteredProducts.length > 0 ? (
+        <div className="flex space-x-6">
           {filteredProducts.map(product => (
-            <div key={product._id} className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 px-3">
-              <ProductCard product={product} />
-            </div>
+            <Link
+              to={`/product/${product._id}`}
+              key={product._id}
+              className="glass-effect rounded-lg p-4 shadow-glass hover-effect flex-shrink-0 w-72"
+            >
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-48 object-cover rounded-t-lg"
+              />
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-light-text truncate">{product.name}</h3>
+                <p className="text-light-text/80 text-sm truncate mb-2">
+                  {product.description || 'No description available'}
+                </p>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-yellow-accent font-bold">${product.price}</p>
+                  <StarRating rating={product.rating || 0} />
+                </div>
+                <button
+                  className="w-full bg-yellow-accent text-dark-bg py-2 rounded hover:bg-light-yellow transition-colors hover-effect text-sm font-semibold"
+                  onClick={(e) => e.preventDefault()} // Prevent Link navigation for demo; replace with addToCart logic
+                >
+                  Quick Add
+                </button>
+              </div>
+            </Link>
           ))}
         </div>
-        {filteredProducts.length > itemsPerPage && (
-          <>
-            <button
-              onClick={prevSlide}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-primary text-white p-3 rounded-full hover:bg-accent transition-colors z-10"
-            >
-              ←
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-primary text-white p-3 rounded-full hover:bg-accent transition-colors z-10"
-            >
-              →
-            </button>
-          </>
-        )}
-      </div>
+      ) : (
+        <p className="text-light-text/70">No products in this category.</p>
+      )}
     </div>
   );
 }

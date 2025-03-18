@@ -1,53 +1,89 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/register`, { email, password });
-      alert('Registration successful! Please log in.');
-      navigate('/login');
-    } catch (error) {
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      await axios.post('http://localhost:5000/api/auth/register', { name, email, password });
+      navigate('/login'); // Redirect to login after successful registration
+    } catch (err) {
+      setError(err.response?.data.message || 'Registration failed');
     }
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-md text-text">
-      <h1 className="text-4xl font-bold mb-8 text-center text-primary">Register</h1>
-      <form onSubmit={handleRegister} className="space-y-6 bg-background p-6 rounded-lg shadow-lg">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          required
-        />
-        <button type="submit" className="w-full bg-primary text-white p-3 rounded hover:bg-accent transition-colors shadow-md">
-          Register
-        </button>
-      </form>
-      {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-      <p className="mt-4 text-center">
-        Already have an account? <Link to="/login" className="text-primary hover:text-accent transition-colors">Login</Link>
-      </p>
+    <div className="min-h-screen bg-dark-bg flex items-center justify-center p-6">
+      <div className="glass-effect p-8 rounded-lg shadow-glass max-w-md w-full hover-effect">
+        <h1 className="text-3xl font-bold text-yellow-accent mb-6 text-center">Register</h1>
+        {error && <p className="text-red-400 text-center mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect font-semibold"
+          >
+            Register
+          </button>
+        </form>
+        <p className="text-light-text text-center mt-4">
+          Already have an account?{' '}
+          <Link to="/login" className="text-yellow-accent hover:underline transition-colors">
+            Login
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
