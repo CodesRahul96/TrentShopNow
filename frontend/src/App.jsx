@@ -12,6 +12,7 @@ import Cart from './pages/Cart';
 import NotFound from './pages/NotFound'; // Import the new page
 import Footer from './components/Footer';
 import ContactUs from './pages/Contact';
+import Checkout from './pages/Checkout';
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function App() {
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/top-products" element={<CategoryPage />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+
             <Route path="*" element={<NotFound />} /> {/* Catch-all for 404 */}
           </Routes>
           <Footer />

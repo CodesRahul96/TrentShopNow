@@ -1,39 +1,42 @@
-import { useState } from 'react';
-import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useState } from "react";
+import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Checkout() {
   const { cart, setCart, removeFromCart } = useCart();
-  const [token] = useState(localStorage.getItem('token'));
+  const [token] = useState(localStorage.getItem("token"));
   const navigate = useNavigate();
 
   const [shippingAddress, setShippingAddress] = useState({
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: ''
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "",
   });
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    if (!shippingAddress.addressLine1) newErrors.addressLine1 = 'Address Line 1 is required';
-    if (!shippingAddress.city) newErrors.city = 'City is required';
-    if (!shippingAddress.state) newErrors.state = 'State is required';
-    if (!shippingAddress.postalCode) newErrors.postalCode = 'Postal Code is required';
-    if (!shippingAddress.country) newErrors.country = 'Country is required';
-    if (!paymentMethod) newErrors.paymentMethod = 'Please select a payment method';
+    if (!shippingAddress.addressLine1)
+      newErrors.addressLine1 = "Address Line 1 is required";
+    if (!shippingAddress.city) newErrors.city = "City is required";
+    if (!shippingAddress.state) newErrors.state = "State is required";
+    if (!shippingAddress.postalCode)
+      newErrors.postalCode = "Postal Code is required";
+    if (!shippingAddress.country) newErrors.country = "Country is required";
+    if (!paymentMethod)
+      newErrors.paymentMethod = "Please select a payment method";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleCheckout = async () => {
     if (!token) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
@@ -42,48 +45,60 @@ export default function Checkout() {
     }
 
     try {
-      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const total = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
       await axios.post(
         `${import.meta.env.VITE_BASE_URL}/api/orders`,
         {
           items: cart,
           total,
           shippingAddress,
-          paymentMethod
+          paymentMethod,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCart([]);
-      alert('Order placed successfully!');
-      navigate('/');
+      alert("Order placed successfully!");
+      navigate("/");
     } catch (error) {
-      console.error('Checkout failed:', error);
-      alert('Failed to place order. Please try again.');
+      console.error("Checkout failed:", error);
+      alert("Failed to place order. Please try again.");
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setShippingAddress((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   return (
     <div className="container mx-auto p-6 text-text">
-      <h1 className="text-4xl font-bold mb-8 text-center text-primary">Checkout</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center text-primary">
+        Checkout
+      </h1>
       <div className="bg-background rounded-lg p-6 shadow-lg grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Cart Items */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-primary">Your Cart</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-primary">
+            Your Cart
+          </h2>
           {cart.length === 0 ? (
             <p className="text-center">Your cart is empty</p>
           ) : (
             <>
               {cart.map((item) => (
-                <div key={item._id} className="mb-4 border-b border-gray-200 pb-4 flex justify-between items-center">
+                <div
+                  key={item._id}
+                  className="mb-4 border-b border-gray-200 pb-4 flex justify-between items-center"
+                >
                   <div>
                     <p className="text-lg font-medium">{item.name}</p>
-                    <p className="text-sm">Quantity: {item.quantity} - ${item.price * item.quantity}</p>
+                    <p className="text-sm">
+                      Quantity: {item.quantity} - ${item.price * item.quantity}
+                    </p>
                   </div>
                   <button
                     onClick={() => removeFromCart(item._id)}
@@ -94,7 +109,10 @@ export default function Checkout() {
                 </div>
               ))}
               <p className="text-2xl font-bold mt-4">
-                Total: ${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                Total: $
+                {cart
+                  .reduce((sum, item) => sum + item.price * item.quantity, 0)
+                  .toFixed(2)}
               </p>
             </>
           )}
@@ -102,7 +120,9 @@ export default function Checkout() {
 
         {/* Shipping and Payment Form */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-primary">Shipping & Payment</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-primary">
+            Shipping & Payment
+          </h2>
           <form className="space-y-4">
             {/* Shipping Address */}
             <div>
@@ -115,7 +135,11 @@ export default function Checkout() {
                 className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
-              {errors.addressLine1 && <p className="text-red-500 text-sm mt-1">{errors.addressLine1}</p>}
+              {errors.addressLine1 && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.addressLine1}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1">Address Line 2 (Optional)</label>
@@ -137,7 +161,9 @@ export default function Checkout() {
                 className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
-              {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+              {errors.city && (
+                <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -150,7 +176,9 @@ export default function Checkout() {
                   className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
-                {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
+                {errors.state && (
+                  <p className="text-red-500 text-sm mt-1">{errors.state}</p>
+                )}
               </div>
               <div>
                 <label className="block mb-1">Postal Code</label>
@@ -162,7 +190,11 @@ export default function Checkout() {
                   className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
-                {errors.postalCode && <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>}
+                {errors.postalCode && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.postalCode}
+                  </p>
+                )}
               </div>
             </div>
             <div>
@@ -175,7 +207,9 @@ export default function Checkout() {
                 className="w-full p-3 border border-gray-300 rounded bg-secondary text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
-              {errors.country && <p className="text-red-500 text-sm mt-1">{errors.country}</p>}
+              {errors.country && (
+                <p className="text-red-500 text-sm mt-1">{errors.country}</p>
+              )}
             </div>
 
             {/* Payment Method */}
@@ -187,7 +221,7 @@ export default function Checkout() {
                     type="radio"
                     name="paymentMethod"
                     value="credit_card"
-                    checked={paymentMethod === 'credit_card'}
+                    checked={paymentMethod === "credit_card"}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
@@ -198,7 +232,7 @@ export default function Checkout() {
                     type="radio"
                     name="paymentMethod"
                     value="paypal"
-                    checked={paymentMethod === 'paypal'}
+                    checked={paymentMethod === "paypal"}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
@@ -209,14 +243,18 @@ export default function Checkout() {
                     type="radio"
                     name="paymentMethod"
                     value="cod"
-                    checked={paymentMethod === 'cod'}
+                    checked={paymentMethod === "cod"}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
                   Cash on Delivery
                 </label>
               </div>
-              {errors.paymentMethod && <p className="text-red-500 text-sm mt-1">{errors.paymentMethod}</p>}
+              {errors.paymentMethod && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.paymentMethod}
+                </p>
+              )}
             </div>
 
             <button

@@ -28,7 +28,7 @@ export default function CategoryPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let url = `${import.meta.env.VITE_BASE_URL}api/products`;
+        let url = `${import.meta.env.VITE_BASE_URL}/api/products`;
         if (category === 'top-products') {
           setIsTopProducts(true);
           // Fetch all products and sort client-side for "top-products"

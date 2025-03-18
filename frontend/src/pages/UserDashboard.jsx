@@ -28,6 +28,7 @@ export default function UserDashboard() {
   const [profilePicture, setProfilePicture] = useState(null);
   const [message, setMessage] = useState("");
   const [activeSection, setActiveSection] = useState("userDetails");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -40,6 +41,14 @@ export default function UserDashboard() {
     { id: "updateMobile", label: "Update Mobile Number" },
     { id: "orderedProducts", label: "Ordered Products" },
   ];
+
+  const decodeToken = (token) => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return {};
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -62,7 +71,7 @@ export default function UserDashboard() {
           }),
         ]);
         setUser(userRes.data);
-        setOrders(ordersRes.data);
+        setOrders(ordersRes.data || []); // Ensure orders is an array
         setProfileData({
           name: userRes.data.name || "",
           gender: userRes.data.gender || "",
@@ -70,22 +79,26 @@ export default function UserDashboard() {
         });
         setPhoneNumber(userRes.data.phoneNumber || "");
       } catch (error) {
-        console.error("Failed to fetch data:", error);
-        if (error.response?.status === 401) navigate("/login");
+        setMessage("Failed to load dashboard data");
+        console.error("Error fetching dashboard data:", error);
       }
     };
     fetchData();
-  }, [navigate, token]);
+  }, [token, navigate]);
+
+  const handleSectionChange = (sectionId) => {
+    setActiveSection(sectionId);
+    setIsSidebarOpen(false);
+  };
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_BASE_URL}/api/auth/me`,
         profileData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(res.data);
       setMessage("Profile updated successfully");
     } catch (error) {
       setMessage("Failed to update profile");
@@ -99,533 +112,313 @@ export default function UserDashboard() {
       return;
     }
     try {
-      const res = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_BASE_URL}/api/auth/change-password`,
-        {
-          oldPassword: passwordData.oldPassword,
-          newPassword: passwordData.newPassword,
-        },
+        passwordData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessage(res.data.message);
-      setPasswordData({
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      setMessage("Password changed successfully");
+      setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
     } catch (error) {
-      setMessage(error.response?.data.message || "Failed to change password");
+      setMessage("Failed to change password");
     }
   };
 
-  const handleAddAddress = async (e) => {
+  const handleAddressAdd = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BASE_URL}/api/auth/me`,
-        { address: newAddress },
+      await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/auth/address`,
+        newAddress,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(res.data);
-      setNewAddress({
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        country: "",
-      });
       setMessage("Address added successfully");
+      setNewAddress({ addressLine1: "", addressLine2: "", city: "", state: "", postalCode: "", country: "" });
     } catch (error) {
       setMessage("Failed to add address");
     }
   };
 
-  const handleUpdateMobile = async (e) => {
+  const handleMobileUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_BASE_URL}/api/auth/me`,
         { phoneNumber },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(res.data);
       setMessage("Mobile number updated successfully");
     } catch (error) {
       setMessage("Failed to update mobile number");
     }
   };
 
-  const handleProfilePictureUpload = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("profilePicture", profilePicture);
-    try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BASE_URL}/api/auth/me/profile-picture`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      setUser({ ...user, profilePicture: res.data.profilePicture });
-      setProfilePicture(null);
-      setMessage("Profile picture updated successfully");
-    } catch (error) {
-      setMessage("Failed to upload profile picture");
-    }
-  };
-
-  const handleCancelOrder = async (orderId) => {
-    try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_BASE_URL}/api/orders/cancel/${orderId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setOrders(orders.map((o) => (o._id === orderId ? res.data : o)));
-    } catch (error) {
-      console.error("Failed to cancel order:", error);
-      alert(error.response?.data.message || "Failed to cancel order");
-    }
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <div className="flex min-h-screen bg-dark-bg">
-      <Sidebar
-        items={sidebarItems}
-        activeItem={activeSection}
-        setActiveItem={setActiveSection}
-      />
-      <div className="flex-1 p-6 ml-64 min-h-screen pt-20">
-        <h1 className="text-4xl font-bold text-light-text mb-8 text-center">
-          User Dashboard
-        </h1>
+    <div className="min-h-screen bg-dark-bg pt-20 flex flex-col md:flex-row">
+      {/* Sidebar Toggle Button (Mobile) */}
+      <button
+        className="md:hidden fixed top-20 left-4 text-light-text p-2 bg-yellow-accent rounded-full hover:bg-light-yellow transition-colors z-50"
+        onClick={toggleSidebar}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
-        {activeSection === "userDetails" && user && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              User Details
-            </h2>
-            <div className="space-y-2 text-light-text">
-              {user.profilePicture && (
-                <img
-                  src={`${import.meta.env.VITE_BASE_URL}/${user.profilePicture}`}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full mb-4 border-2 border-yellow-accent"
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 w-64 bg-dark-bg glass-effect shadow-glass transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-50`}
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-yellow-accent">Dashboard</h2>
+            <button
+              className="md:hidden text-light-text"
+              onClick={toggleSidebar}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <Sidebar
+            items={sidebarItems}
+            activeItem={activeSection}
+            onItemClick={handleSectionChange}
+          />
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-6">
+        <div className="container mx-auto">
+          {message && (
+            <p className={`text-center mb-4 ${message.includes('success') ? 'text-green-400' : 'text-red-400'}`}>
+              {message}
+            </p>
+          )}
+
+          {/* User Details */}
+          {activeSection === "userDetails" && user && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h1 className="text-3xl font-semibold text-yellow-accent mb-4">User Details</h1>
+              <p className="text-light-text">Name: {user.name}</p>
+              <p className="text-light-text">Email: {user.email}</p>
+              <p className="text-light-text">Gender: {user.gender || 'Not set'}</p>
+              <p className="text-light-text">Age: {user.age || 'Not set'}</p>
+              <p className="text-light-text">Phone: {user.phoneNumber || 'Not set'}</p>
+            </section>
+          )}
+
+          {/* Edit Profile */}
+          {activeSection === "editProfile" && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">Edit Profile</h2>
+              <form onSubmit={handleProfileUpdate} className="space-y-4">
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  placeholder="Name"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
                 />
-              )}
-              <p>
-                <strong>Name:</strong> {user.name || "Not set"}
-              </p>
-              <p>
-                <strong>Email:</strong> {user.email}
-              </p>
-              <p>
-                <strong>Gender:</strong> {user.gender || "Not set"}
-              </p>
-              <p>
-                <strong>Age:</strong> {user.age || "Not set"}
-              </p>
-              <p>
-                <strong>Phone Number:</strong> {user.phoneNumber || "Not set"}
-              </p>
-            </div>
-          </section>
-        )}
+                <input
+                  type="text"
+                  value={profileData.gender}
+                  onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                  placeholder="Gender"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="number"
+                  value={profileData.age}
+                  onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
+                  placeholder="Age"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-yellow-accent text-dark-bg py-2 rounded hover:bg-light-yellow transition-colors hover-effect"
+                >
+                  Update Profile
+                </button>
+              </form>
+            </section>
+          )}
 
-        {activeSection === "editProfile" && user && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              Edit Profile
-            </h2>
-            <form
-              onSubmit={handleProfileUpdate}
-              className="space-y-4 max-w-lg mx-auto"
-            >
-              <input
-                placeholder="Name"
-                value={profileData.name}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, name: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-              />
-              <select
-                value={profileData.gender}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, gender: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-              >
-                <option value="" className="text-dark-bg">
-                  Select Gender
-                </option>
-                <option value="male" className="text-dark-bg">
-                  Male
-                </option>
-                <option value="female" className="text-dark-bg">
-                  Female
-                </option>
-                <option value="other" className="text-dark-bg">
-                  Other
-                </option>
-              </select>
-              <input
-                type="number"
-                placeholder="Age"
-                value={profileData.age}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, age: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                min="1"
-              />
-              <button
-                type="submit"
-                className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect"
-              >
-                Update Profile
-              </button>
-            </form>
-            <form
-              onSubmit={handleProfilePictureUpload}
-              className="mt-6 space-y-4 max-w-lg mx-auto"
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setProfilePicture(e.target.files[0])}
-                className="w-full p-3 glass-effect text-light-text rounded"
-              />
-              <button
-                type="submit"
-                className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect"
-                disabled={!profilePicture}
-              >
-                Upload Profile Picture
-              </button>
-            </form>
-            {message && (
-              <p
-                className={`mt-4 text-center ${
-                  message.includes("success")
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {message}
-              </p>
-            )}
-          </section>
-        )}
-
-        {activeSection === "userAddress" && user && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              User Address
-            </h2>
-            {user.address && Object.keys(user.address).length > 0 ? (
-              <div className="space-y-2 text-light-text">
-                <p>{user.address.addressLine1}</p>
-                {user.address.addressLine2 && (
-                  <p>{user.address.addressLine2}</p>
+          {/* User Address */}
+          {activeSection === "userAddress" && user && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">User Address</h2>
+              <p className="text-light-text">
+                {user.address ? (
+                  `${user.address.addressLine1}, ${user.address.city}, ${user.address.state} ${user.address.postalCode}, ${user.address.country}`
+                ) : (
+                  "No address set"
                 )}
-                <p>
-                  {user.address.city}
-                  {user.address.city ? ", " : ""}
-                  {user.address.state} {user.address.postalCode}
-                </p>
-                <p>{user.address.country}</p>
-              </div>
-            ) : (
-              <p className="text-light-text/70">No address set</p>
-            )}
-          </section>
-        )}
-
-        {activeSection === "addAddress" && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              Add Address
-            </h2>
-            <form
-              onSubmit={handleAddAddress}
-              className="space-y-4 max-w-lg mx-auto"
-            >
-              <input
-                placeholder="Address Line 1"
-                value={newAddress.addressLine1}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, addressLine1: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                placeholder="Address Line 2 (Optional)"
-                value={newAddress.addressLine2}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, addressLine2: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-              />
-              <input
-                placeholder="City"
-                value={newAddress.city}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, city: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                placeholder="State"
-                value={newAddress.state}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, state: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                placeholder="Postal Code"
-                value={newAddress.postalCode}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, postalCode: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                placeholder="Country"
-                value={newAddress.country}
-                onChange={(e) =>
-                  setNewAddress({ ...newAddress, country: e.target.value })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect"
-              >
-                Add Address
-              </button>
-            </form>
-            {message && (
-              <p
-                className={`mt-4 text-center ${
-                  message.includes("success")
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {message}
               </p>
-            )}
-          </section>
-        )}
+            </section>
+          )}
 
-        {activeSection === "changePassword" && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              Change Password
-            </h2>
-            <form
-              onSubmit={handlePasswordChange}
-              className="space-y-4 max-w-lg mx-auto"
-            >
-              <input
-                type="password"
-                placeholder="Old Password"
-                value={passwordData.oldPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    oldPassword: e.target.value,
-                  })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                type="password"
-                placeholder="New Password"
-                value={passwordData.newPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    newPassword: e.target.value,
-                  })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={passwordData.confirmPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    confirmPassword: e.target.value,
-                  })
-                }
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect"
-              >
-                Update Password
-              </button>
-            </form>
-            {message && (
-              <p
-                className={`mt-4 text-center ${
-                  message.includes("success")
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {message}
-              </p>
-            )}
-          </section>
-        )}
+          {/* Add Address */}
+          {activeSection === "addAddress" && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">Add Address</h2>
+              <form onSubmit={handleAddressAdd} className="space-y-4">
+                <input
+                  type="text"
+                  value={newAddress.addressLine1}
+                  onChange={(e) => setNewAddress({ ...newAddress, addressLine1: e.target.value })}
+                  placeholder="Address Line 1"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="text"
+                  value={newAddress.addressLine2}
+                  onChange={(e) => setNewAddress({ ...newAddress, addressLine2: e.target.value })}
+                  placeholder="Address Line 2"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="text"
+                  value={newAddress.city}
+                  onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                  placeholder="City"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="text"
+                  value={newAddress.state}
+                  onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
+                  placeholder="State"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="text"
+                  value={newAddress.postalCode}
+                  onChange={(e) => setNewAddress({ ...newAddress, postalCode: e.target.value })}
+                  placeholder="Postal Code"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="text"
+                  value={newAddress.country}
+                  onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })}
+                  placeholder="Country"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-yellow-accent text-dark-bg py-2 rounded hover:bg-light-yellow transition-colors hover-effect"
+                >
+                  Add Address
+                </button>
+              </form>
+            </section>
+          )}
 
-        {activeSection === "updateMobile" && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              Update Mobile Number
-            </h2>
-            <form
-              onSubmit={handleUpdateMobile}
-              className="space-y-4 max-w-lg mx-auto"
-            >
-              <input
-                type="tel"
-                placeholder="Mobile Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full p-3 glass-effect text-light-text placeholder-light-text/70 rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-yellow-accent text-dark-bg p-3 rounded hover:bg-light-yellow transition-colors hover-effect"
-              >
-                Update Mobile Number
-              </button>
-            </form>
-            {message && (
-              <p
-                className={`mt-4 text-center ${
-                  message.includes("success")
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {message}
-              </p>
-            )}
-          </section>
-        )}
+          {/* Change Password */}
+          {activeSection === "changePassword" && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">Change Password</h2>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <input
+                  type="password"
+                  value={passwordData.oldPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
+                  placeholder="Old Password"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  placeholder="New Password"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  placeholder="Confirm New Password"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-yellow-accent text-dark-bg py-2 rounded hover:bg-light-yellow transition-colors hover-effect"
+                >
+                  Change Password
+                </button>
+              </form>
+            </section>
+          )}
 
-        {activeSection === "orderedProducts" && (
-          <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
-            <h2 className="text-2xl font-semibold text-yellow-accent mb-4">
-              Ordered Products
-            </h2>
-            {orders.length === 0 ? (
-              <p className="text-center text-light-text/70">No orders found</p>
-            ) : (
-              <div className="space-y-6">
-                {orders.map((order) => (
-                  <div
-                    key={order._id}
-                    className="glass-effect p-4 rounded-lg shadow-glass hover-effect"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-light-text">
-                      <div>
-                        <p className="text-lg font-medium">
-                          Order ID: {order._id}
-                        </p>
-                        <p>Total: ${order.total.toFixed(2)}</p>
-                        <p>
-                          Payment Method:{" "}
-                          {order.paymentMethod
-                            ? order.paymentMethod
-                                .replace("_", " ")
-                                .toUpperCase()
-                            : "Not specified"}
-                        </p>
-                        <p>Status: {order.status.toUpperCase()}</p>
-                        <p>
-                          Created: {new Date(order.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Shipping Address:</p>
-                        <p>
-                          {order.shippingAddress?.addressLine1 ||
-                            "Not provided"}
-                        </p>
-                        {order.shippingAddress?.addressLine2 && (
-                          <p>{order.shippingAddress.addressLine2}</p>
-                        )}
-                        <p>
-                          {order.shippingAddress?.city || ""}
-                          {order.shippingAddress?.city ? ", " : ""}
-                          {order.shippingAddress?.state || ""}{" "}
-                          {order.shippingAddress?.postalCode || ""}
-                        </p>
-                        <p>{order.shippingAddress?.country || ""}</p>
-                      </div>
+          {/* Update Mobile Number */}
+          {activeSection === "updateMobile" && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">Update Mobile Number</h2>
+              <form onSubmit={handleMobileUpdate} className="space-y-4">
+                <input
+                  type="text"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="New Mobile Number"
+                  className="w-full p-3 glass-effect text-light-text rounded focus:outline-none focus:ring-2 focus:ring-yellow-accent"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-yellow-accent text-dark-bg py-2 rounded hover:bg-light-yellow transition-colors hover-effect"
+                >
+                  Update Mobile
+                </button>
+              </form>
+            </section>
+          )}
+
+          {/* Ordered Products */}
+          {activeSection === "orderedProducts" && (
+            <section className="glass-effect p-6 rounded-lg shadow-glass hover-effect">
+              <h2 className="text-2xl font-semibold text-yellow-accent mb-4">Ordered Products</h2>
+              {orders.length > 0 ? (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order._id} className="glass-effect p-4 rounded-lg shadow-glass">
+                      <p className="text-light-text">
+                        <span className="font-semibold">Order ID:</span> {order._id}
+                      </p>
+                      <p className="text-light-text">
+                        <span className="font-semibold">Date:</span> {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-light-text">
+                        <span className="font-semibold">Products:</span>{' '}
+                        {order.products && Array.isArray(order.products) && order.products.length > 0
+                          ? order.products.map((item) => 
+                              item.productId && (typeof item.productId === 'object' ? item.productId.name : item.productId) || 'Unknown Product'
+                            ).join(', ')
+                          : 'No products listed'}
+                      </p>
+                      <p className="text-light-text">
+                        <span className="font-semibold">Total:</span> ${order.totalAmount ? order.totalAmount.toFixed(2) : 'N/A'}
+                      </p>
+                      <p className="text-light-text">
+                        <span className="font-semibold">Status:</span> {order.status || 'N/A'}
+                      </p>
                     </div>
-                    <div className="mt-4">
-                      <p className="font-semibold text-light-text">Items:</p>
-                      <ul className="list-disc pl-5 text-light-text">
-                        {order.items.map((item, index) => (
-                          <li key={index}>
-                            {item.name} - Quantity: {item.quantity} - $
-                            {item.price * item.quantity}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    {order.status === "pending" && (
-                      <button
-                        onClick={() => handleCancelOrder(order._id)}
-                        className="mt-4 bg-red-500 text-light-text p-2 rounded hover:bg-red-600 transition-colors hover-effect"
-                      >
-                        Cancel Order
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-      </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-light-text/70">No orders found.</p>
+              )}
+            </section>
+          )}
+        </div>
+      </main>
     </div>
   );
-}
-
-function decodeToken(token) {
-  const base64Url = token.split(".")[1];
-  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  const jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split("")
-      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-      .join("")
-  );
-  return JSON.parse(jsonPayload);
 }
