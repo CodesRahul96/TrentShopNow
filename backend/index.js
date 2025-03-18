@@ -10,8 +10,11 @@ const orderRoutes = require('./routes/orders');
 dotenv.config();
 const app = express();
 
-app.use(cors());
 app.use(express.json());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Vercel frontend URL or local dev
+  credentials: true, // If using cookies/sessions
+}));
 
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
